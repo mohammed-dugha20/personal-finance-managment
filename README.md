@@ -1,0 +1,316 @@
+# Personal Finance Tracker
+
+A full-stack, containerized personal finance management api built with Node.js/Express, TypeScript, PostgreSQL, and Docker Compose.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [System Architecture](#system-architecture)
+- [Data Model](#data-model)
+- [Setup & Installation](#setup--installation)
+- [Usage](#usage)
+- [Credits & Resources](#credits--resources)
+
+---
+
+## Overview
+
+This project is a robust, user-friendly api for tracking personal finances.secure authentication, and insightful analytics. All components are containerized for easy deployment.
+
+**Motivation:**
+
+- Consolidate financial tracking into a single, efficient platform.
+- Learn and apply best practices in backend development, security, and DevOps.
+
+## Features
+
+- **User Authentication:** Secure signup/login with JWT and password hashing.
+- **User-specific Data:** Each user's data is isolated and protected.
+- **Expense & Income Tracking:** Add, view, and categorize transactions.
+- **REST API:** Clean separation between frontend and backend.
+- **Dockerized:** One-command setup for local or production.
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    subgraph "User's Browser"
+        A["Postman"]
+    end
+
+    subgraph "Docker Environment"
+        B["Frontend Container\nNginx"]
+        C["Backend Container\nNode.js/Express"]
+        D["Database Container\nPostgreSQL"]
+        E["Migration Container"]
+    end
+
+    subgraph "Backend Logic"
+        F["Auth Routes"]
+        G["Feed Routes (Protected)"]
+        H["Auth Controller"]
+        I["Feed Controller"]
+        J["Auth Service"]
+        K["Feed Service"]
+        L["is-auth Middleware"]
+    end
+
+    subgraph "Database Schema"
+        M["users Table"]
+        N["transactions Table"]
+        O["SQL Functions"]
+        P["expense_categories Table"]
+        Q["expense_types Table"]
+    end
+
+    A -- "HTTP Request" --> B
+    B -- "API Calls" --> C
+
+    C --> F & G
+
+    F --> H
+    G -- "Verifies JWT via" --> L
+    L --> I
+
+    H --> J
+    I --> K
+
+    J --> M
+    K --> N & O
+
+    E -- "Applies Schema to" --> D
+    D --> M & N & O & P & Q
+
+    style A fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style B fill:#e8f5e9,stroke:#333,stroke-width:2px
+    style C fill:#fff3e0,stroke:#333,stroke-width:2px
+    style D fill:#f3e5f5,stroke:#333,stroke-width:2px
+    style E fill:#efebe9,stroke:#333,stroke-width:2px
+
+    style F fill:#ffebee,stroke:#333,stroke-width:2px
+    style G fill:#ffebee,stroke:#333,stroke-width:2px
+    style H fill:#fffde7,stroke:#333,stroke-width:2px
+    style I fill:#fffde7,stroke:#333,stroke-width:2px
+    style J fill:#e0f7fa,stroke:#333,stroke-width:2px
+    style K fill:#e0f7fa,stroke:#333,stroke-width:2px
+    style L fill:#fce4ec,stroke:#333,stroke-width:2px
+
+    style M fill:#f1f8e9,stroke:#333,stroke-width:2px
+    style N fill:#f1f8e9,stroke:#333,stroke-width:2px
+    style O fill:#f1f8e9,stroke:#333,stroke-width:2px
+    style P fill:#f1f8e9,stroke:#333,stroke-width:2px
+    style Q fill:#f1f8e9,stroke:#333,stroke-width:2px
+```
+
+---
+
+## Data Model
+
+### Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS {
+        int id PK
+        varchar email
+        varchar password_hash
+        timestamp created_at
+    }
+    TRANSACTIONS {
+        int id PK
+        date date
+        decimal amount
+        int type_id FK
+        int category_id FK
+        int user_id FK
+    }
+    EXPENSE_CATEGORIES {
+        int id PK
+        varchar category_name
+    }
+    EXPENSE_TYPES {
+        int id PK
+        varchar type_name
+        int category_id FK
+    }
+
+    USERS ||--o{ TRANSACTIONS : "has"
+    EXPENSE_CATEGORIES ||--o{ EXPENSE_TYPES : "contains"
+    EXPENSE_CATEGORIES ||--o{ TRANSACTIONS : "categorizes"
+    EXPENSE_TYPES ||--o{ TRANSACTIONS : "typed by"
+    EXPENSE_TYPES }o--|| EXPENSE_CATEGORIES : "belongs to"
+    TRANSACTIONS }o--|| USERS : "belongs to"
+    TRANSACTIONS }o--|| EXPENSE_CATEGORIES : "belongs to"
+    TRANSACTIONS }o--|| EXPENSE_TYPES : "belongs to"
+```
+
+**Table Descriptions:**
+
+- **users:** Stores user credentials and metadata. Each user has a unique email and securely hashed password.
+- **transactions:** Records all income/expenses. Each transaction is linked to a user, a category, and a type.
+- **expense_categories:** High-level groupings (e.g., Housing, Personal Running Costs).
+- **expense_types:** Specific types within a category (e.g., Restaurants, Groceries).
+
+---
+
+## Setup & Installation
+
+1. **Clone the repository:**
+   ```sh
+   git clone <repo-url>
+   cd finance-tracker
+   ```
+2. **Start the stack:**
+   ```sh
+   docker-compose up -d
+   ```
+   - To rebuild: `docker-compose up --build`
+   - To stop: `docker-compose down` (add `-v` to remove volumes)
+3. **Access the app:**
+   - Frontend: [http://localhost:3001](http://localhost:3001)
+   - Backend/API: [http://localhost:3000](http://localhost:3000)
+
+**Note:** Change the frontend port in `docker-compose.yaml` if 3001 is blocked.
+
+---
+
+## Usage
+
+- **Sign up** for a new account.
+- **Log in** to access your dashboard.
+- **Add transactions** (income/expenses) via the dashboard modal.
+- **View analytics** and charts for your financial overview.
+- **Log out** securely; you'll be auto-logged out if your session expires.
+
+---
+
+**This project is a work in progress and intended for personal use.**
+
+---
+
+## API Documentation
+
+### Authentication
+
+Most endpoints require a JWT token. After logging in, include the token in the `Authorization` header as:
+
+```
+Authorization: Bearer <token>
+```
+
+### Endpoints
+
+#### **Auth**
+
+- **POST /auth/signup**
+
+  - Register a new user.
+  - Request body (JSON):
+    ```json
+    {
+      "email": "user@example.com",
+      "password": "yourpassword"
+    }
+    ```
+  - Response:
+    - `201 Created` on success:
+      ```json
+      { "message": "User created successfully!", "user": { ... } }
+      ```
+    - `409 Conflict` if email exists.
+
+- **POST /auth/login**
+  - Log in and receive a JWT token.
+  - Request body (JSON):
+    ```json
+    {
+      "email": "user@example.com",
+      "password": "yourpassword"
+    }
+    ```
+  - Response:
+    - `200 OK` on success:
+      ```json
+      { "token": "<JWT>", "userId": 1 }
+      ```
+    - `401 Unauthorized` if credentials are invalid.
+
+---
+
+#### **Feed (Protected, requires JWT)**
+
+- **GET /feed/expense-categories**
+
+  - Get all expense categories.
+  - Response: Array of categories.
+
+- **POST /feed/transaction**
+
+  - Create a new transaction.
+  - Request body (JSON):
+    ```json
+    {
+      "date": "2024-07-17",
+      "amount": 100.5,
+      "typeId": 1,
+      "categoryId": 2
+    }
+    ```
+  - Response:
+    - `201 Created`:
+      ```json
+      { "message": "Transaction created successfully!", "transaction": { ... } }
+      ```
+
+- **GET /feed/timeseries**
+
+  - Get time series data for the authenticated user.
+  - Response: Array of time series data.
+
+- **GET /feed/income-expenses**
+
+  - Get income and expenses for the authenticated user.
+  - Response: Array of income/expense data.
+
+- **GET /feed/casflow**
+
+  - Get cashflow data for the authenticated user.
+  - Response: Array of cashflow data.
+
+- **GET /feed/financial-overview**
+
+  - Get a financial overview for the authenticated user.
+  - Response: Array of overview data.
+
+- **GET /feed/financial-details**
+
+  - Get detailed financial data for the authenticated user.
+  - Response: Array of details.
+
+- **GET /feed/list-expenses**
+  - Get a table of expenses per month for the authenticated user.
+  - Response: Array of expense table data.
+
+---
+
+### Example: Using Authorization Header
+
+For protected endpoints, add this header:
+
+```
+Authorization: Bearer <your_token>
+```
+
+### Error Responses
+
+- `401 Unauthorized`: Not authenticated or invalid token.
+- `422 Unprocessable Entity`: Validation failed.
+- `409 Conflict`: Resource already exists.
+- `500 Internal Server Error`: Server error.
+
+---
