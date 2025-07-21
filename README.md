@@ -1,6 +1,60 @@
 # Personal Finance Tracker
 
-A full-stack, containerized personal finance management api built with Node.js/Express, TypeScript, PostgreSQL, and Docker Compose.
+A backend, containerized personal finance management API built with Node.js/Express, TypeScript, PostgreSQL, and Docker Compose.
+
+---
+
+## Backend API Build & Usage
+
+### Prerequisites
+- Node.js (v14 or higher recommended)
+- npm
+- PostgreSQL (running locally or accessible remotely)
+
+### 1. Clone the repository
+```sh
+git clone <repo-url>
+cd finance-tracker/backend
+```
+
+### 2. Configure Environment Variables
+Create a `.env` file in the `backend` directory with the following content:
+```
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_HOST=localhost
+POSTGRES_DB=tracker
+PORT=8000
+JWT_SECRET=your_super_secret_key
+```
+Replace the values as needed for your setup.
+
+### 3. Install Dependencies
+```sh
+npm install
+```
+
+### 4. Build the Backend
+```sh
+npm run build
+```
+
+### 5. Run Database Migrations
+Go to the `database` directory and run:
+```sh
+cd ../database
+npm install
+npm run build
+node dist/runMigrations.js up
+```
+
+### 6. Start the Backend API
+Return to the backend directory and run:
+```sh
+cd ../backend
+npm run start:prod
+```
+The API will be available at `http://localhost:8000` (or the port you set).
 
 ---
 
@@ -10,15 +64,14 @@ A full-stack, containerized personal finance management api built with Node.js/E
 - [Features](#features)
 - [System Architecture](#system-architecture)
 - [Data Model](#data-model)
-- [Setup & Installation](#setup--installation)
-- [Usage](#usage)
+- [API Documentation](#api-documentation)
 - [Credits & Resources](#credits--resources)
 
 ---
 
 ## Overview
 
-This project is a robust, user-friendly api for tracking personal finances.secure authentication, and insightful analytics. All components are containerized for easy deployment.
+This project is a robust, user-friendly API for tracking personal finances. Secure authentication and insightful analytics. All components are containerized for easy deployment.
 
 **Motivation:**
 
@@ -30,7 +83,7 @@ This project is a robust, user-friendly api for tracking personal finances.secur
 - **User Authentication:** Secure signup/login with JWT and password hashing.
 - **User-specific Data:** Each user's data is isolated and protected.
 - **Expense & Income Tracking:** Add, view, and categorize transactions.
-- **REST API:** Clean separation between frontend and backend.
+- **REST API:** Clean separation between backend and database.
 - **Dockerized:** One-command setup for local or production.
 
 ---
@@ -39,12 +92,11 @@ This project is a robust, user-friendly api for tracking personal finances.secur
 
 ```mermaid
 graph TD
-    subgraph "User's Browser"
-        A["Postman"]
+    subgraph "API Client"
+        A["Postman or HTTP Client"]
     end
 
     subgraph "Docker Environment"
-        B["Frontend Container\nNginx"]
         C["Backend Container\nNode.js/Express"]
         D["Database Container\nPostgreSQL"]
         E["Migration Container"]
@@ -68,9 +120,7 @@ graph TD
         Q["expense_types Table"]
     end
 
-    A -- "HTTP Request" --> B
-    B -- "API Calls" --> C
-
+    A -- "HTTP Request" --> C
     C --> F & G
 
     F --> H
@@ -87,7 +137,6 @@ graph TD
     D --> M & N & O & P & Q
 
     style A fill:#e3f2fd,stroke:#333,stroke-width:2px
-    style B fill:#e8f5e9,stroke:#333,stroke-width:2px
     style C fill:#fff3e0,stroke:#333,stroke-width:2px
     style D fill:#f3e5f5,stroke:#333,stroke-width:2px
     style E fill:#efebe9,stroke:#333,stroke-width:2px
@@ -155,41 +204,6 @@ erDiagram
 - **transactions:** Records all income/expenses. Each transaction is linked to a user, a category, and a type.
 - **expense_categories:** High-level groupings (e.g., Housing, Personal Running Costs).
 - **expense_types:** Specific types within a category (e.g., Restaurants, Groceries).
-
----
-
-## Setup & Installation
-
-1. **Clone the repository:**
-   ```sh
-   git clone <repo-url>
-   cd finance-tracker
-   ```
-2. **Start the stack:**
-   ```sh
-   docker-compose up -d
-   ```
-   - To rebuild: `docker-compose up --build`
-   - To stop: `docker-compose down` (add `-v` to remove volumes)
-3. **Access the app:**
-   - Frontend: [http://localhost:3001](http://localhost:3001)
-   - Backend/API: [http://localhost:3000](http://localhost:3000)
-
-**Note:** Change the frontend port in `docker-compose.yaml` if 3001 is blocked.
-
----
-
-## Usage
-
-- **Sign up** for a new account.
-- **Log in** to access your dashboard.
-- **Add transactions** (income/expenses) via the dashboard modal.
-- **View analytics** and charts for your financial overview.
-- **Log out** securely; you'll be auto-logged out if your session expires.
-
----
-
-**This project is a work in progress and intended for personal use.**
 
 ---
 
